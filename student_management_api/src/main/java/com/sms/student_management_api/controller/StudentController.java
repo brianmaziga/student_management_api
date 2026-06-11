@@ -1,58 +1,66 @@
 package com.sms.student_management_api.controller;
 
-import com.sms.student_management_api.dto.StudentDTO;
+import com.sms.student_management_api.entity.Student;
 import com.sms.student_management_api.service.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/students")
+@RequestMapping("/api/students")
 public class StudentController {
 
     @Autowired
-    private StudentService studentService; // This is the instance variable you must use!
+    private StudentService studentService;
 
-    // 1. POST /api/v1/students
+    // POST: Create
     @PostMapping
-    public ResponseEntity<StudentDTO> createStudent(@RequestBody StudentDTO studentDTO) {
-        // Changed from StudentService to studentService
-        StudentDTO savedStudent = studentService.createStudent(studentDTO);
-        return new ResponseEntity<>(savedStudent, HttpStatus.CREATED);
+    public ResponseEntity<Student> createStudent(@RequestBody Student student) {
+        return ResponseEntity.ok(studentService.saveStudent(student));
     }
 
-    // 2. GET /api/v1/students
+    // GET: Read All
     @GetMapping
-    public ResponseEntity<List<StudentDTO>> getAllStudents() {
-        // Changed from StudentService to studentService
-        List<StudentDTO> students = studentService.getAllStudents();
-        return ResponseEntity.ok(students);
+    public ResponseEntity<List<Student>> getAllStudents() {
+        return ResponseEntity.ok(studentService.getAllStudents());
     }
 
-    // 3. GET /api/v1/students/{id}
+    // GET: Read One
     @GetMapping("/{id}")
-    public ResponseEntity<StudentDTO> getStudentById(@PathVariable Long id) {
-        // Changed from StudentService to studentService
-        StudentDTO studentDTO = studentService.getStudentById(id);
-        return ResponseEntity.ok(studentDTO);
+    public ResponseEntity<Student> getStudentById(@PathVariable Long id) {
+        return ResponseEntity.ok(studentService.getStudentById(id));
     }
 
-    // 4. PUT /api/v1/students/{id}
+    // PUT: Full Update (Replace entire object)
     @PutMapping("/{id}")
-    public ResponseEntity<StudentDTO> updateStudent(@PathVariable Long id, @RequestBody StudentDTO studentDTO) {
-        // Changed from StudentService to studentService
-        StudentDTO updatedStudent = studentService.updateStudent(id, studentDTO);
-        return ResponseEntity.ok(updatedStudent);
+    public ResponseEntity<Student> updateStudent(@PathVariable Long id, @RequestBody Student studentDetails) {
+        return ResponseEntity.ok(studentService.updateStudent(id, studentDetails));
     }
 
-    // 5. DELETE /api/v1/students/{id}
+    // PATCH: Partial Update (e.g., just changing email)
+    @PatchMapping("/{id}")
+    public ResponseEntity<Student> partialUpdate(@PathVariable Long id, @RequestBody Student updates) {
+        return ResponseEntity.ok(studentService.partialUpdate(id, updates));
+    }
+
+    // DELETE: Remove
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteStudent(@PathVariable Long id) {
-        // Changed from StudentService to studentService
         studentService.deleteStudent(id);
-        return ResponseEntity.ok("Student deleted successfully!");
+        return ResponseEntity.ok("Student deleted successfully");
+    }
+
+    // HEAD: Check if resource exists
+    @RequestMapping(method = RequestMethod.HEAD, value = "/{id}")
+    public ResponseEntity<?> headStudent(@PathVariable Long id) {
+        return studentService.exists(id) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+    }
+
+    // OPTIONS: List allowed methods
+    @RequestMapping(method = RequestMethod.OPTIONS)
+    public ResponseEntity<?> optionsStudents() {
+        return ResponseEntity.ok().header("Allow", "GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS").build();
     }
 }
