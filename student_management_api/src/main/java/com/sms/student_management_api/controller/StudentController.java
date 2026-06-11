@@ -1,66 +1,55 @@
 package com.sms.student_management_api.controller;
 
-import com.sms.student_management_api.entity.Student;
+import com.sms.student_management_api.dto.StudentDTO;
 import com.sms.student_management_api.service.StudentService;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/students")
 public class StudentController {
 
-    @Autowired
-    private StudentService studentService;
+    private final StudentService studentService;
 
-    // POST: Create
+    // Constructor injection
+    public StudentController(StudentService studentService) {
+        this.studentService = studentService;
+    }
+
+    // CREATE: Post standard student records with input validation rules enforced
     @PostMapping
-    public ResponseEntity<Student> createStudent(@RequestBody Student student) {
-        return ResponseEntity.ok(studentService.saveStudent(student));
+    public ResponseEntity<StudentDTO> createStudent(@Valid @RequestBody StudentDTO studentDTO) {
+        return new ResponseEntity<>(studentService.saveStudent(studentDTO), HttpStatus.CREATED);
     }
 
-    // GET: Read All
+    // READ (ALL / SEARCH): Fetch paginated lists, optional filtering via text keywords
     @GetMapping
-    public ResponseEntity<List<Student>> getAllStudents() {
-        return ResponseEntity.ok(studentService.getAllStudents());
+    public ResponseEntity<Page<StudentDTO>> getStudents(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return new ResponseEntity<>(studentService.getStudents(keyword, page, size), HttpStatus.OK);
     }
 
-    // GET: Read One
+    // READ (SINGLE): Look up records via unique system path parameters
     @GetMapping("/{id}")
-    public ResponseEntity<Student> getStudentById(@PathVariable Long id) {
-        return ResponseEntity.ok(studentService.getStudentById(id));
+    public ResponseEntity<StudentDTO> getStudentById(@PathVariable("id") Long id) {
+        return new ResponseEntity<>(studentService.getStudentById(id), HttpStatus.OK);
     }
 
-    // PUT: Full Update (Replace entire object)
-    @PutMapping("/{id}")
-    public ResponseEntity<Student> updateStudent(@PathVariable Long id, @RequestBody Student studentDetails) {
-        return ResponseEntity.ok(studentService.updateStudent(id, studentDetails));
-    }
-
-    // PATCH: Partial Update (e.g., just changing email)
+    // UPDATE: Execute targeted property corrections without full object requirements
     @PatchMapping("/{id}")
-    public ResponseEntity<Student> partialUpdate(@PathVariable Long id, @RequestBody Student updates) {
-        return ResponseEntity.ok(studentService.partialUpdate(id, updates));
+    public ResponseEntity<StudentDTO> updateStudent(@PathVariable("id") Long id, @RequestBody StudentDTO updates) {
+        return new ResponseEntity<>(studentService.partialUpdate(id, updates), HttpStatus.OK);
     }
 
-    // DELETE: Remove
+    // DELETE: Discard structural records directly out of the database tier
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteStudent(@PathVariable Long id) {
+    public ResponseEntity<String> deleteStudent(@PathVariable("id") Long id) {
         studentService.deleteStudent(id);
-        return ResponseEntity.ok("Student deleted successfully");
-    }
-
-    // HEAD: Check if resource exists
-    @RequestMapping(method = RequestMethod.HEAD, value = "/{id}")
-    public ResponseEntity<?> headStudent(@PathVariable Long id) {
-        return studentService.exists(id) ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
-    }
-
-    // OPTIONS: List allowed methods
-    @RequestMapping(method = RequestMethod.OPTIONS)
-    public ResponseEntity<?> optionsStudents() {
-        return ResponseEntity.ok().header("Allow", "GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS").build();
+        return new ResponseEntity<>("Student record deleted successfully.", HttpStatus.OK);
     }
 }

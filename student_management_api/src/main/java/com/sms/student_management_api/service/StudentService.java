@@ -1,14 +1,14 @@
 package com.sms.student_management_api.service;
 
-import com.sms.student_management_api.entity.Student;
-import java.util.List;
+import com.sms.student_management_api.dto.StudentDTO;
+import org.springframework.data.domain.Page;
 
 public interface StudentService {
-    Student saveStudent(Student student);
-    List<Student> getAllStudents();
-    Student getStudentById(Long id);
-    Student updateStudent(Long id, Student studentDetails);
-    Student partialUpdate(Long id, Student updates);
+    StudentDTO saveStudent(StudentDTO studentDTO);
+    StudentDTO getStudentById(Long id);
+    StudentDTO partialUpdate(Long id, StudentDTO updates);
     void deleteStudent(Long id);
-    boolean exists(Long id);
+
+    // Updated: Replaces the old getAllStudents() method to support filters and pages
+    Page<StudentDTO> getStudents(String keyword, int page, int size);
 }
