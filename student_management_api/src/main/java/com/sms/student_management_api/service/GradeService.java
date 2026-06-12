@@ -4,6 +4,7 @@ import com.sms.student_management_api.dto.GradeDTO;
 import com.sms.student_management_api.entity.Course;
 import com.sms.student_management_api.entity.Grade;
 import com.sms.student_management_api.entity.Student;
+import com.sms.student_management_api.exception.ResourceNotFoundException;
 import com.sms.student_management_api.repository.CourseRepository;
 import com.sms.student_management_api.repository.GradeRepository;
 import com.sms.student_management_api.repository.StudentRepository;
@@ -30,12 +31,11 @@ public class GradeService {
         this.emailService = emailService;
     }
 
-    // Assign grade
     public GradeDTO assignGrade(GradeDTO dto) {
         Student student = studentRepository.findById(dto.getStudentId())
-                .orElseThrow(() -> new RuntimeException("Student not found with id: " + dto.getStudentId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + dto.getStudentId()));
         Course course = courseRepository.findById(dto.getCourseId())
-                .orElseThrow(() -> new RuntimeException("Course not found with id: " + dto.getCourseId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + dto.getCourseId()));
 
         Grade grade = new Grade();
         grade.setStudent(student);
@@ -46,7 +46,6 @@ public class GradeService {
 
         Grade saved = gradeRepository.save(grade);
 
-        // Send grade email
         if (student.getEmail() != null) {
             emailService.sendGradeEmail(
                     student.getEmail(),
@@ -60,7 +59,6 @@ public class GradeService {
         return toDTO(saved);
     }
 
-    // Get grades by student
     public List<GradeDTO> getGradesByStudent(Long studentId) {
         return gradeRepository.findByStudentId(studentId)
                 .stream()
@@ -68,7 +66,6 @@ public class GradeService {
                 .collect(Collectors.toList());
     }
 
-    // Get grades by course
     public List<GradeDTO> getGradesByCourse(Long courseId) {
         return gradeRepository.findByCourseId(courseId)
                 .stream()
@@ -76,10 +73,9 @@ public class GradeService {
                 .collect(Collectors.toList());
     }
 
-    // Update grade
     public GradeDTO updateGrade(Long id, GradeDTO dto) {
         Grade grade = gradeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Grade not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Grade not found with id: " + id));
         if (dto.getScore() != null) {
             grade.setScore(dto.getScore());
             grade.setGrade(calculateGrade(dto.getScore()));
@@ -88,14 +84,12 @@ public class GradeService {
         return toDTO(gradeRepository.save(grade));
     }
 
-    // Delete grade
     public void deleteGrade(Long id) {
         gradeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Grade not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Grade not found with id: " + id));
         gradeRepository.deleteById(id);
     }
 
-    // Auto calculate grade letter from score
     private String calculateGrade(Double score) {
         if (score >= 70) return "A";
         else if (score >= 60) return "B";
@@ -104,7 +98,6 @@ public class GradeService {
         else return "F";
     }
 
-    // Map entity to DTO
     private GradeDTO toDTO(Grade grade) {
         GradeDTO dto = new GradeDTO();
         dto.setId(grade.getId());

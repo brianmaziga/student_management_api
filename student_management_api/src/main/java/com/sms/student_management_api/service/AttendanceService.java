@@ -4,6 +4,7 @@ import com.sms.student_management_api.dto.AttendanceDTO;
 import com.sms.student_management_api.entity.Attendance;
 import com.sms.student_management_api.entity.Course;
 import com.sms.student_management_api.entity.Student;
+import com.sms.student_management_api.exception.ResourceNotFoundException;
 import com.sms.student_management_api.repository.AttendanceRepository;
 import com.sms.student_management_api.repository.CourseRepository;
 import com.sms.student_management_api.repository.StudentRepository;
@@ -28,12 +29,11 @@ public class AttendanceService {
         this.courseRepository = courseRepository;
     }
 
-    // Mark attendance
     public AttendanceDTO markAttendance(AttendanceDTO dto) {
         Student student = studentRepository.findById(dto.getStudentId())
-                .orElseThrow(() -> new RuntimeException("Student not found with id: " + dto.getStudentId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + dto.getStudentId()));
         Course course = courseRepository.findById(dto.getCourseId())
-                .orElseThrow(() -> new RuntimeException("Course not found with id: " + dto.getCourseId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + dto.getCourseId()));
 
         Attendance attendance = new Attendance();
         attendance.setStudent(student);
@@ -45,7 +45,6 @@ public class AttendanceService {
         return toDTO(attendanceRepository.save(attendance));
     }
 
-    // Get attendance by student
     public List<AttendanceDTO> getAttendanceByStudent(Long studentId) {
         return attendanceRepository.findByStudentId(studentId)
                 .stream()
@@ -53,7 +52,6 @@ public class AttendanceService {
                 .collect(Collectors.toList());
     }
 
-    // Get attendance by course
     public List<AttendanceDTO> getAttendanceByCourse(Long courseId) {
         return attendanceRepository.findByCourseId(courseId)
                 .stream()
@@ -61,7 +59,6 @@ public class AttendanceService {
                 .collect(Collectors.toList());
     }
 
-    // Get attendance by date
     public List<AttendanceDTO> getAttendanceByDate(LocalDate date) {
         return attendanceRepository.findByDate(date)
                 .stream()
@@ -69,10 +66,9 @@ public class AttendanceService {
                 .collect(Collectors.toList());
     }
 
-    // Update attendance
     public AttendanceDTO updateAttendance(Long id, AttendanceDTO dto) {
         Attendance attendance = attendanceRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Attendance not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Attendance not found with id: " + id));
         if (dto.getStatus() != null)
             attendance.setStatus(Attendance.AttendanceStatus.valueOf(dto.getStatus().toUpperCase()));
         if (dto.getRemarks() != null)
@@ -82,14 +78,12 @@ public class AttendanceService {
         return toDTO(attendanceRepository.save(attendance));
     }
 
-    // Delete attendance
     public void deleteAttendance(Long id) {
         attendanceRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Attendance not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Attendance not found with id: " + id));
         attendanceRepository.deleteById(id);
     }
 
-    // Map entity to DTO
     private AttendanceDTO toDTO(Attendance attendance) {
         AttendanceDTO dto = new AttendanceDTO();
         dto.setId(attendance.getId());
