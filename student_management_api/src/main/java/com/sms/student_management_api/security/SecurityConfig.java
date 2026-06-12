@@ -26,16 +26,30 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/auth/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/swagger-ui/index.html",
-                                "/v3/api-docs/**",
-                                "/v3/api-docs.yaml",
-                                "/webjars/**"
-                        ).permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/students/**").permitAll()
+                        // Public
+                        .requestMatchers("/api/auth/*", "/swagger-ui/*",
+                                "/swagger-ui.html", "/v3/api-docs/**",
+                                "/webjars/**").permitAll()
+                        // Grades — TEACHER can assign/update, ADMIN has full access
+                        .requestMatchers(HttpMethod.GET, "/api/grades/**").hasAnyRole("ADMIN", "TEACHER")
+                        .requestMatchers(HttpMethod.POST, "/api/grades/**").hasAnyRole("ADMIN", "TEACHER")
+                        .requestMatchers(HttpMethod.PATCH, "/api/grades/**").hasAnyRole("ADMIN", "TEACHER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/grades/**").hasRole("ADMIN")
+                        // Attendance — TEACHER can mark/update, ADMIN has full access
+                        .requestMatchers(HttpMethod.GET, "/api/attendance/**").hasAnyRole("ADMIN", "TEACHER")
+                        .requestMatchers(HttpMethod.POST, "/api/attendance/**").hasAnyRole("ADMIN", "TEACHER")
+                        .requestMatchers(HttpMethod.PATCH, "/api/attendance/**").hasAnyRole("ADMIN", "TEACHER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/attendance/**").hasRole("ADMIN")
+                        // Students — read only for TEACHER, full access for ADMIN
+                        .requestMatchers(HttpMethod.GET, "/api/students/**").hasAnyRole("ADMIN", "TEACHER")
+                        .requestMatchers(HttpMethod.POST, "/api/students/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/students/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/students/**").hasRole("ADMIN")
+                        // Courses — read only for TEACHER, full access for ADMIN
+                        .requestMatchers(HttpMethod.GET, "/api/courses/**").hasAnyRole("ADMIN", "TEACHER")
+                        .requestMatchers(HttpMethod.POST, "/api/courses/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/courses/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/courses/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 );
 

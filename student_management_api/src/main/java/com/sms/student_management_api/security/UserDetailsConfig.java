@@ -24,6 +24,19 @@ public class UserDetailsConfig {
                 .password(passwordEncoder.encode("Kent_jr"))
                 .roles("ADMIN")
                 .build();
-        return new InMemoryUserDetailsManager(admin);
+
+        UserDetails teacher = User.builder()
+                .username("teacher1")
+                .password(passwordEncoder.encode("Teacher_123"))
+                .roles("TEACHER")
+                .build();
+
+        UserDetails student = User.builder()
+                .username("student1")
+                .password(passwordEncoder.encode("Student_123"))
+                .roles("STUDENT")
+                .build();
+
+        return new InMemoryUserDetailsManager(admin, teacher, student);
     }
 }
