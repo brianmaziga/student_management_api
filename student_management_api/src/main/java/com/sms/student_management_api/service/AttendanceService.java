@@ -8,6 +8,8 @@ import com.sms.student_management_api.exception.ResourceNotFoundException;
 import com.sms.student_management_api.repository.AttendanceRepository;
 import com.sms.student_management_api.repository.CourseRepository;
 import com.sms.student_management_api.repository.StudentRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -16,6 +18,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class AttendanceService {
+
+    private static final Logger log = LoggerFactory.getLogger(AttendanceService.class);
 
     private final AttendanceRepository attendanceRepository;
     private final StudentRepository studentRepository;
@@ -30,6 +34,7 @@ public class AttendanceService {
     }
 
     public AttendanceDTO markAttendance(AttendanceDTO dto) {
+        log.info("Marking attendance for student {} in course {}", dto.getStudentId(), dto.getCourseId());
         Student student = studentRepository.findById(dto.getStudentId())
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + dto.getStudentId()));
         Course course = courseRepository.findById(dto.getCourseId())
@@ -42,10 +47,13 @@ public class AttendanceService {
         attendance.setStatus(Attendance.AttendanceStatus.valueOf(dto.getStatus().toUpperCase()));
         attendance.setRemarks(dto.getRemarks());
 
-        return toDTO(attendanceRepository.save(attendance));
+        AttendanceDTO saved = toDTO(attendanceRepository.save(attendance));
+        log.info("Attendance marked: {} for student {}", saved.getStatus(), student.getFirstName());
+        return saved;
     }
 
     public List<AttendanceDTO> getAttendanceByStudent(Long studentId) {
+        log.debug("Fetching attendance for student id: {}", studentId);
         return attendanceRepository.findByStudentId(studentId)
                 .stream()
                 .map(this::toDTO)
@@ -53,6 +61,7 @@ public class AttendanceService {
     }
 
     public List<AttendanceDTO> getAttendanceByCourse(Long courseId) {
+        log.debug("Fetching attendance for course id: {}", courseId);
         return attendanceRepository.findByCourseId(courseId)
                 .stream()
                 .map(this::toDTO)
@@ -60,6 +69,7 @@ public class AttendanceService {
     }
 
     public List<AttendanceDTO> getAttendanceByDate(LocalDate date) {
+        log.debug("Fetching attendance for date: {}", date);
         return attendanceRepository.findByDate(date)
                 .stream()
                 .map(this::toDTO)
@@ -67,6 +77,7 @@ public class AttendanceService {
     }
 
     public AttendanceDTO updateAttendance(Long id, AttendanceDTO dto) {
+        log.info("Updating attendance with id: {}", id);
         Attendance attendance = attendanceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Attendance not found with id: " + id));
         if (dto.getStatus() != null)
@@ -79,6 +90,7 @@ public class AttendanceService {
     }
 
     public void deleteAttendance(Long id) {
+        log.info("Deleting attendance with id: {}", id);
         attendanceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Attendance not found with id: " + id));
         attendanceRepository.deleteById(id);

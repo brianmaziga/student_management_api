@@ -6,6 +6,8 @@ import com.sms.student_management_api.entity.Student;
 import com.sms.student_management_api.exception.ResourceNotFoundException;
 import com.sms.student_management_api.repository.CourseRepository;
 import com.sms.student_management_api.repository.StudentRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,6 +15,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class CourseService {
+
+    private static final Logger log = LoggerFactory.getLogger(CourseService.class);
 
     private final CourseRepository courseRepository;
     private final StudentRepository studentRepository;
@@ -27,6 +31,7 @@ public class CourseService {
     }
 
     public CourseDTO createCourse(CourseDTO dto) {
+        log.info("Creating course: {}", dto.getName());
         Course course = new Course();
         course.setName(dto.getName());
         course.setCode(dto.getCode());
@@ -35,6 +40,7 @@ public class CourseService {
     }
 
     public List<CourseDTO> getAllCourses() {
+        log.debug("Fetching all courses");
         return courseRepository.findAll()
                 .stream()
                 .map(this::toDTO)
@@ -42,12 +48,14 @@ public class CourseService {
     }
 
     public CourseDTO getCourseById(Long id) {
+        log.debug("Fetching course with id: {}", id);
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + id));
         return toDTO(course);
     }
 
     public CourseDTO updateCourse(Long id, CourseDTO dto) {
+        log.info("Updating course with id: {}", id);
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + id));
         if (dto.getName() != null) course.setName(dto.getName());
@@ -57,12 +65,14 @@ public class CourseService {
     }
 
     public void deleteCourse(Long id) {
+        log.info("Deleting course with id: {}", id);
         courseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + id));
         courseRepository.deleteById(id);
     }
 
     public String enrollStudent(Long courseId, Long studentId) {
+        log.info("Enrolling student {} in course {}", studentId, courseId);
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
         Student student = studentRepository.findById(studentId)
@@ -76,12 +86,14 @@ public class CourseService {
                     student.getFirstName() + " " + student.getLastName(),
                     course.getName()
             );
+            log.info("Enrollment email sent to: {}", student.getEmail());
         }
 
         return student.getFirstName() + " enrolled in " + course.getName();
     }
 
     public String unenrollStudent(Long courseId, Long studentId) {
+        log.info("Unenrolling student {} from course {}", studentId, courseId);
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + courseId));
         Student student = studentRepository.findById(studentId)

@@ -4,12 +4,16 @@ import com.sms.student_management_api.dto.StudentDTO;
 import com.sms.student_management_api.entity.Student;
 import com.sms.student_management_api.exception.ResourceNotFoundException;
 import com.sms.student_management_api.repository.StudentRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 @Service
 public class StudentService {
+
+    private static final Logger log = LoggerFactory.getLogger(StudentService.class);
 
     private final StudentRepository studentRepository;
 
@@ -18,16 +22,20 @@ public class StudentService {
     }
 
     public StudentDTO saveStudent(StudentDTO dto) {
+        log.info("Saving new student: {} {}", dto.getFirstName(), dto.getLastName());
         Student student = new Student();
         student.setFirstName(dto.getFirstName());
         student.setLastName(dto.getLastName());
         student.setEmail(dto.getEmail());
         student.setPhoneNumber(dto.getPhoneNumber());
         student.setCourse(dto.getCourse());
-        return toDTO(studentRepository.save(student));
+        StudentDTO saved = toDTO(studentRepository.save(student));
+        log.info("Student saved with id: {}", saved.getId());
+        return saved;
     }
 
     public Page<StudentDTO> getStudents(String keyword, int page, int size) {
+        log.debug("Fetching students with keyword: {}", keyword);
         PageRequest pageable = PageRequest.of(page, size);
         if (keyword != null && !keyword.isEmpty()) {
             return studentRepository
@@ -39,12 +47,14 @@ public class StudentService {
     }
 
     public StudentDTO getStudentById(Long id) {
+        log.debug("Fetching student with id: {}", id);
         Student student = studentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + id));
         return toDTO(student);
     }
 
     public StudentDTO partialUpdate(Long id, StudentDTO updates) {
+        log.info("Updating student with id: {}", id);
         Student student = studentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + id));
         if (updates.getFirstName() != null) student.setFirstName(updates.getFirstName());
@@ -56,9 +66,11 @@ public class StudentService {
     }
 
     public void deleteStudent(Long id) {
+        log.info("Deleting student with id: {}", id);
         studentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + id));
         studentRepository.deleteById(id);
+        log.info("Student deleted with id: {}", id);
     }
 
     private StudentDTO toDTO(Student student) {

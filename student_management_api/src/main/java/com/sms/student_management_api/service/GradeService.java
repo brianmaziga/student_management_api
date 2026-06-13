@@ -8,6 +8,8 @@ import com.sms.student_management_api.exception.ResourceNotFoundException;
 import com.sms.student_management_api.repository.CourseRepository;
 import com.sms.student_management_api.repository.GradeRepository;
 import com.sms.student_management_api.repository.StudentRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,6 +17,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class GradeService {
+
+    private static final Logger log = LoggerFactory.getLogger(GradeService.class);
 
     private final GradeRepository gradeRepository;
     private final StudentRepository studentRepository;
@@ -32,6 +36,7 @@ public class GradeService {
     }
 
     public GradeDTO assignGrade(GradeDTO dto) {
+        log.info("Assigning grade to student {} for course {}", dto.getStudentId(), dto.getCourseId());
         Student student = studentRepository.findById(dto.getStudentId())
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + dto.getStudentId()));
         Course course = courseRepository.findById(dto.getCourseId())
@@ -45,6 +50,7 @@ public class GradeService {
         grade.setRemarks(dto.getRemarks());
 
         Grade saved = gradeRepository.save(grade);
+        log.info("Grade assigned: {} for student {}", saved.getGrade(), student.getFirstName());
 
         if (student.getEmail() != null) {
             emailService.sendGradeEmail(
@@ -54,12 +60,14 @@ public class GradeService {
                     saved.getScore(),
                     saved.getGrade()
             );
+            log.info("Grade email sent to: {}", student.getEmail());
         }
 
         return toDTO(saved);
     }
 
     public List<GradeDTO> getGradesByStudent(Long studentId) {
+        log.debug("Fetching grades for student id: {}", studentId);
         return gradeRepository.findByStudentId(studentId)
                 .stream()
                 .map(this::toDTO)
@@ -67,6 +75,7 @@ public class GradeService {
     }
 
     public List<GradeDTO> getGradesByCourse(Long courseId) {
+        log.debug("Fetching grades for course id: {}", courseId);
         return gradeRepository.findByCourseId(courseId)
                 .stream()
                 .map(this::toDTO)
@@ -74,6 +83,7 @@ public class GradeService {
     }
 
     public GradeDTO updateGrade(Long id, GradeDTO dto) {
+        log.info("Updating grade with id: {}", id);
         Grade grade = gradeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Grade not found with id: " + id));
         if (dto.getScore() != null) {
@@ -85,6 +95,7 @@ public class GradeService {
     }
 
     public void deleteGrade(Long id) {
+        log.info("Deleting grade with id: {}", id);
         gradeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Grade not found with id: " + id));
         gradeRepository.deleteById(id);
